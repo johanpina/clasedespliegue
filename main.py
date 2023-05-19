@@ -4,7 +4,7 @@ from schemas import Libro, LibroBase
 from model import LibroDB
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
-
+from typing import List 
 
 Base.metadata.create_all(bind=engine)
 
@@ -35,3 +35,16 @@ async def eliminar_libro(id_libro: int, db: Session = Depends(get_db)):
     db.delete(libro)
     db.commit()
     return {"mensaje": "Libro eliminado"}
+
+@app.get("/libros/{id_libro}", response_model=Libro)
+async def leer_libro(id_libro: int, db: Session = Depends(get_db)):
+    try:
+        libro = db.query(LibroDB).filter(LibroDB.id == id_libro).one()
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail="Libro no encontrado")
+    return libro
+
+@app.get("/libros/", response_model=List[Libro])
+async def listar_libros(db: Session = Depends(get_db)):
+    libros = db.query(LibroDB).all()
+    return libros
